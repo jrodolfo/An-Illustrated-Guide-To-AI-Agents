@@ -107,7 +107,10 @@ def handle_command(cmd, agent):
 
     # `/skills` command lists available skills with descriptions
     elif cmd == "/skills":
-        for name, skill in agent.skills.skills.items():
+        skills = getattr(agent.tools, "skills", {})
+        if not skills:
+            console.print("  [dim]No skills available.[/]")
+        for name, skill in skills.items():
             console.print(
                 f"  [magenta]{name}[/] - [dim]{skill['description']}[/]"
             )
