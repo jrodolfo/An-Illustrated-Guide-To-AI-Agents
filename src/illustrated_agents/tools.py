@@ -168,6 +168,7 @@ class NativeTools(Tools):
         if isinstance(args, str):
             args = json.loads(args)
         tool_call = {
+            "id": response.tool_call.get("id"),
             "tool": response.tool_call["function"]["name"],
             "kwargs": args,
         }
