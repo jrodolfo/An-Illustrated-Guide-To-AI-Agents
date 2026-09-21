@@ -14,8 +14,8 @@ help: ## Show available commands
 	@echo "  compile    Compile Python source and tests"
 	@echo "  check      Run all automated checks"
 	@echo "  sync       Install notebook and terminal dependencies"
-	@echo "  tinyagent  Start the TinyAgent CLI"
-	@echo "  jupyter    Start JupyterLab"
+	@echo "  tinyagent  Start the final assembled TinyAgent CLI"
+	@echo "  jupyter    Start JupyterLab for the chapter notebooks"
 
 test: ## Run the unit tests
 	$(PYTHON) -m unittest discover -s tests -v
@@ -28,8 +28,8 @@ check: test compile ## Run all automated checks
 sync: ## Install notebook and terminal dependencies
 	$(UV) sync --extra jupyter --extra terminal
 
-tinyagent: ## Start the TinyAgent CLI
+tinyagent: ## Start the final assembled TinyAgent CLI
 	$(UV) run --extra terminal tinyagent
 
-jupyter: ## Start JupyterLab
+jupyter: ## Start JupyterLab for the chapter notebooks
 	$(UV) run --extra jupyter jupyter lab
