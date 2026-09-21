@@ -1,5 +1,6 @@
-import json
 import inspect
+import json
+import re
 
 from pathlib import Path
 from typing import Any, Callable
@@ -88,18 +89,37 @@ To use a tool, respond with JSON: {{"tool": "name", "kwargs": {{"param": "value"
         """Parse a JSON tool call from text."""
         text = response.content
 
-        if '"tool":' in text or '"tool:"' in text:
+        if not isinstance(text, str) or not re.search(r'"tool"\s*:', text):
+            return response
+
+        if "{" not in text or "}" not in text:
+            raise ValueError("Tool call must contain a complete JSON object.")
+
+        try:
             start, end = text.find("{"), text.rfind("}") + 1
             tool_call = json.loads(text[start:end])
+        except json.JSONDecodeError as error:
+            raise ValueError(f"Invalid tool call JSON: {error.msg}.") from error
 
-            # Add the parsed tool call to the response
-            return Response(
-                content=response.content,
-                reasoning=response.reasoning,
-                tool_call=tool_call,
-            )
+        if not isinstance(tool_call, dict):
+            raise ValueError("Tool call JSON must be an object.")
 
-        return response
+        name = tool_call.get("tool")
+        if not isinstance(name, str) or not name.strip():
+            raise ValueError("Tool call must include a non-empty 'tool' name.")
+
+        kwargs = tool_call.get("kwargs", {})
+        if name == "final_answer" and not isinstance(kwargs, str):
+            raise ValueError("The final answer 'kwargs' must be a string.")
+        if name != "final_answer" and not isinstance(kwargs, dict):
+            raise ValueError("Tool call 'kwargs' must be an object.")
+
+        return Response(
+            content=response.content,
+            reasoning=response.reasoning,
+            tool_call={"tool": name, "kwargs": kwargs},
+            metadata=response.metadata,
+        )
 
     def execute(self, response: Response) -> Any:
         """Run a registered tool.
@@ -163,12 +183,31 @@ class NativeTools(Tools):
         if not response.tool_call:
             return response
 
+        function = response.tool_call.get("function")
+        if not isinstance(function, dict):
+            raise ValueError("Native tool call must include a 'function' object.")
+
+        name = function.get("name")
+        if not isinstance(name, str) or not name.strip():
+            raise ValueError(
+                "Native tool call must include a non-empty function name."
+            )
+
         # Extract the tool name and arguments from the tool call
-        args = response.tool_call["function"]["arguments"]
+        args = function.get("arguments", {})
         if isinstance(args, str):
-            args = json.loads(args)
+            try:
+                args = json.loads(args)
+            except json.JSONDecodeError as error:
+                raise ValueError(
+                    f"Invalid native tool arguments JSON: {error.msg}."
+                ) from error
+        if not isinstance(args, dict):
+            raise ValueError("Native tool call arguments must be an object.")
+
         tool_call = {
-            "tool": response.tool_call["function"]["name"],
+            "id": response.tool_call.get("id"),
+            "tool": name,
             "kwargs": args,
         }
 
@@ -177,6 +216,7 @@ class NativeTools(Tools):
             content=response.content,
             reasoning=response.reasoning,
             tool_call=tool_call,
+            metadata=response.metadata,
         )
 
     def observation(self, result: str) -> tuple[str, str]:
