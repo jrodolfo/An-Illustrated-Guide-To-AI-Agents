@@ -52,10 +52,14 @@ def _build_code_tools(workspace: str = ".") -> dict:
     """Build code tool functions scoped to a workspace. Returns {name: (func, description)}."""
     root = Path(workspace).resolve()
 
+    def _is_within_workspace(path: Path) -> bool:
+        """Return whether a resolved path is inside the workspace."""
+        return path.resolve().is_relative_to(root)
+
     def _safe_path(path: str) -> Path:
         """Resolve path within workspace, reject traversal."""
         resolved = (root / path).resolve()
-        if not str(resolved).startswith(str(root)):
+        if not _is_within_workspace(resolved):
             raise ValueError(f"Path '{path}' is outside the workspace.")
         return resolved
 
@@ -99,11 +103,17 @@ def _build_code_tools(workspace: str = ".") -> dict:
 
     def find_files(pattern: str) -> str:
         """Find files matching a glob pattern (e.g., '*.py')."""
-        matches = sorted(p for p in root.rglob(pattern) if p.is_file())
+        pattern_path = Path(pattern)
+        if pattern_path.is_absolute() or ".." in pattern_path.parts:
+            raise ValueError(f"Pattern '{pattern}' is outside the workspace.")
+        matches = sorted(
+            p
+            for p in root.rglob(pattern)
+            if p.is_file() and _is_within_workspace(p)
+        )
         results = [
-            str(p.relative_to(root))
+            str(p.resolve().relative_to(root))
             for p in matches
-            if str(p.resolve()).startswith(str(root))
         ]
         return "\n".join(results[:30]) or "No files found."
 
