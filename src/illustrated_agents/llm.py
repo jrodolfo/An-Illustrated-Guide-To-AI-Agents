@@ -24,6 +24,7 @@ class LLM:
         api_key: str = "no_key",
         think: bool = False,
         temperature: float | None = None,
+        timeout: float = 60.0,
     ):
         """Initialize the LLM with the given model."""
         self.model = model
@@ -31,6 +32,7 @@ class LLM:
         self.api_key = api_key
         self.think = think
         self.temperature = temperature
+        self.timeout = timeout
 
     def generate(
         self, messages: list[dict], tools: list | None = None
@@ -61,7 +63,7 @@ class LLM:
                 "Authorization": f"Bearer {self.api_key}",
             },
         )
-        with urllib.request.urlopen(request) as response:
+        with urllib.request.urlopen(request, timeout=self.timeout) as response:
             data = json.loads(response.read())
 
         # Extract message, tool_call, and metadata
@@ -139,10 +141,12 @@ class EmbeddingModel:
         self,
         model: str,
         base_url: str = "http://localhost:11434/v1",
+        timeout: float = 60.0,
     ):
         """Initialize the embedding model with the given model."""
         self.model = model
         self.base_url = base_url
+        self.timeout = timeout
 
     def embed(self, text: str) -> list[float]:
         """Convert text into a numerical vector."""
@@ -152,7 +156,7 @@ class EmbeddingModel:
             data=json.dumps({"model": self.model, "input": text}).encode(),
             headers={"Content-Type": "application/json"},
         )
-        with urllib.request.urlopen(request) as resp:
+        with urllib.request.urlopen(request, timeout=self.timeout) as resp:
             response = json.loads(resp.read())
 
         # Extract and return the embedding
