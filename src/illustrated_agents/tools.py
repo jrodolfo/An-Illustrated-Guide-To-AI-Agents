@@ -211,6 +211,12 @@ class Skills(NativeTools):
     when the agent **activates** a skill (uses it as a tool).
     """
 
+    def __init__(self, requires_approval=None):
+        if requires_approval is None:
+            requires_approval = []
+        super().__init__(requires_approval=requires_approval)
+        self.skills = {}
+
     def add_skill(self, path: str):
         """Load a SKILL.md file and register it as a callable tool."""
         content = Path(path).read_text(encoding="utf-8")
@@ -232,6 +238,7 @@ class Skills(NativeTools):
             inspect.Signature()
         )  # schema sees no params; lambda still tolerates any
         self.add_tool(name, skill, skill.__doc__)
+        self.skills[name] = {"description": description}
 
     @property
     def prompt(self):
