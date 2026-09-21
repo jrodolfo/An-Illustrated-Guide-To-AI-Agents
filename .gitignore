@@ -81,3 +81,6 @@ venv.bak/
 .DS_Store
 CLAUDE.md
 .claude
+
+# Personal notes
+notes.md
