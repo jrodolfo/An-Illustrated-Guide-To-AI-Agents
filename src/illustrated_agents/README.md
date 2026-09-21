@@ -1,6 +1,6 @@
 # `TinyAgent`
 
-The source code for "An Illustrated Guide to AI Agents" where you build an `TinyAgent` from scratch by building it up with one module at a time:
+The source code for "An Illustrated Guide to AI Agents" where you build a `TinyAgent` from scratch by building it up with one module at a time:
 
 ![../../images/tinyagents.png](../../images/tinyagents.png)
 
@@ -11,36 +11,37 @@ The general idea is that each module is self-contained and added to the `TinyAge
 # Modules to augment your Agent
 from illustrated_agents.llm import LLM  # llm.py
 from illustrated_agents.memory import Memory  # memory.py
-from illustrated_agents.tools import Tools, Skills  # tools.py
+from illustrated_agents.tools import Skills  # tools.py
 from illustrated_agents.planning import NativeReAct  # planning.py
 from illustrated_agents.toolbox import get_weather  # toolbox.py
+from illustrated_agents.display import Display  # display.py
 
 # The TinyAgent
-from illustrated_agents.agent import TinyAgent  # tinyagent.py
+from illustrated_agents.agent import TinyAgent  # agent.py
 
 # Choose an LLM - Using Ollama through an OpenAI endpoint
-llm = LLM(model="my_model", api_base="http://localhost:11434/v1/")
+llm = LLM(model="my_model", base_url="http://localhost:11434/v1")
 
 # Add Memory (simple conversation memory)
 memory = Memory()
 
-# Create autonomous behavior through explicit THOUGHT/ACTION/OBSERVATION cycles
-react = ReAct(max_steps=10)
+# Create autonomous behavior using native reasoning and tool calling
+planner = NativeReAct(max_steps=10)
 
-# Add Tools through explicit tool calling 
+# Add Tools through native tool calling
 tools = Skills()
-tools.add_tool("my_tool", my_tool)
+tools.add_tool("get_weather", get_weather, "Get weather for a location")
 
-# Add Skill
-tools.add_skill(path_to_my_skill.md)
+# Optionally add a Skill
+# tools.add_skill("path/to/SKILL.md")
 
 # Create agent
 agent = TinyAgent(
-    llm=llm, 
-    tools=tools, 
-    memory=memory, 
-    planner=react, 
-    skills=skills
+    llm=llm,
+    memory=memory,
+    tools=tools,
+    planner=planner,
+    display=Display(),
 )
 ```
 
