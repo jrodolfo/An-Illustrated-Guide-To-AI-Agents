@@ -18,23 +18,29 @@ TYPE_MAP = {
 }
 
 
-def tool_to_schema(function: Callable) -> dict:
+def tool_to_schema(
+    function: Callable,
+    name: str | None = None,
+    description: str | None = None,
+) -> dict:
     """Convert a Python function to an OpenAI-style tool schema."""
     signature = inspect.signature(function)
 
     # Extract meatadata
     properties, required = {}, []
-    for name, parameter in signature.parameters.items():
-        properties[name] = {"type": TYPE_MAP.get(parameter.annotation, "string")}
+    for parameter_name, parameter in signature.parameters.items():
+        properties[parameter_name] = {
+            "type": TYPE_MAP.get(parameter.annotation, "string")
+        }
         if parameter.default is inspect.Parameter.empty:
-            required.append(name)
+            required.append(parameter_name)
 
     # Fill schema
     schema = {
         "type": "function",
         "function": {
-            "name": function.__name__,
-            "description": inspect.getdoc(function),
+            "name": name or function.__name__,
+            "description": description or inspect.getdoc(function) or "",
             "parameters": {
                 "type": "object",
                 "properties": properties,
@@ -149,7 +155,12 @@ class NativeTools(Tools):
     def schemas(self) -> list[dict]:
         """Return tool functions for native function calling."""
         return [
-            tool_to_schema(tool["function"]) for tool in self.registry.values()
+            tool_to_schema(
+                tool["function"],
+                name=name,
+                description=tool["description"],
+            )
+            for name, tool in self.registry.items()
         ]
 
     @property
