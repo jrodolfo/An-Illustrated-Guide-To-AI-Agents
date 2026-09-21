@@ -8,7 +8,12 @@ class Memory:
         self.messages = []
 
     def add(
-        self, role: str, content: str, tool_call: dict | None = None, **kwargs
+        self,
+        role: str,
+        content: str,
+        tool_call: dict | None = None,
+        tool_call_id: str | None = None,
+        **kwargs,
     ) -> None:
         """Add a message to memory."""
         message = {"role": role, "content": content}
@@ -16,6 +21,8 @@ class Memory:
         # Tool call
         if tool_call:
             message["tool_calls"] = [tool_call]
+        if tool_call_id:
+            message["tool_call_id"] = tool_call_id
 
         # Append message to memory
         self.messages.append(message)
@@ -30,7 +37,7 @@ class TrimmingMemory(Memory):
 
     def add(self, role: str, content: str, **kwargs) -> None:
         # Add the new message first using the parent class (Memory)
-        super().add(role, content)
+        super().add(role, content, **kwargs)
 
         # Then, keep system message plus the most recent two turns (4 messages)
         system = [
@@ -116,6 +123,7 @@ class MultimodalMemory(Memory):
         role: str,
         content: str,
         tool_call: dict = None,
+        tool_call_id: str = None,
         image_data: str = None,
     ):
         """Add a message to memory."""
@@ -134,6 +142,8 @@ class MultimodalMemory(Memory):
         # Tool call
         if tool_call:
             message["tool_calls"] = [tool_call]
+        if tool_call_id:
+            message["tool_call_id"] = tool_call_id
 
         # Append message to memory
         self.messages.append(message)
@@ -145,6 +155,7 @@ class MultiModalMemory(Memory):
         role: str,
         content: str,
         tool_call: dict = None,
+        tool_call_id: str = None,
         image_data: str = None,
     ):
         """Add a message to memory."""
@@ -155,4 +166,9 @@ class MultiModalMemory(Memory):
                 {"type": "image_url", "image_url": {"url": url}},
                 {"type": "text", "text": content},
             ]
-        super().add(role, content, tool_call=tool_call)
+        super().add(
+            role,
+            content,
+            tool_call=tool_call,
+            tool_call_id=tool_call_id,
+        )

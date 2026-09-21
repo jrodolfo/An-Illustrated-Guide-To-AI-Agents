@@ -75,7 +75,8 @@ class TinyAgent:
 
         # OBSERVATION: add tool results to memory and display
         role, observation = self.tools.observation(result)
-        self.memory.add(role, observation)
+        tool_call_id = response.tool_call.get("id")
+        self.memory.add(role, observation, tool_call_id=tool_call_id)
         self.trajectory.add(response, observation)
         self.display("observation", observation)
 
