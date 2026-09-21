@@ -1,8 +1,9 @@
-from illustrated_agents.llm import LLM, Response, Trajectory
+from illustrated_agents.llm import LLM, Response
 from illustrated_agents.memory import Memory
 from illustrated_agents.planning import ReAct
 from illustrated_agents.tools import Tools
 from illustrated_agents.display import Display
+from illustrated_agents.trajectory import Trajectory
 
 
 class TinyAgent:
@@ -33,7 +34,7 @@ class TinyAgent:
     def run(self, task: str, image_data: str = None) -> str:
         """Run the agent on a task."""
         self.memory.add("user", task, image_data=image_data)
-        self.trajectory.initialize(task)
+        self.trajectory.new_run(task)
 
         # *Autonomy* loop
         for step in range(self.planner.max_steps):
@@ -61,7 +62,7 @@ class TinyAgent:
 
         # ANSWER: Stopping mechanism
         if self.tools.is_done(response):
-            self.trajectory.add(response)
+            self.trajectory.add_step(response)
             return response.content
 
         return self._execute_action(response)
@@ -76,7 +77,7 @@ class TinyAgent:
         # OBSERVATION: add tool results to memory and display
         role, observation = self.tools.observation(result)
         self.memory.add(role, observation)
-        self.trajectory.add(response, observation)
+        self.trajectory.add_step(response, observation)
         self.display("observation", observation)
 
         return None
