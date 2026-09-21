@@ -1,6 +1,8 @@
 from dataclasses import dataclass
+from typing import TYPE_CHECKING
 
-from illustrated_agents.llm import Response
+if TYPE_CHECKING:
+    from illustrated_agents.llm import Response
 
 
 @dataclass
@@ -27,7 +29,9 @@ class Trajectory:
         """Register a new run with the given query."""
         self.runs.append({"query": query, "steps": []})
 
-    def add_step(self, response: Response, observation: str | None = None) -> None:
+    def add_step(
+        self, response: "Response", observation: str | None = None
+    ) -> None:
         """Record a step from a Response, optionally with a tool observation."""
         step = Step(
             thought=response.reasoning or "",
@@ -39,6 +43,14 @@ class Trajectory:
         else:
             step.answer = response.content
         self.runs[-1]["steps"].append(step)
+
+    def initialize(self, query: str) -> None:
+        """Compatibility alias for :meth:`new_run`."""
+        self.new_run(query)
+
+    def add(self, response: "Response", observation: str | None = None) -> None:
+        """Compatibility alias for :meth:`add_step`."""
+        self.add_step(response, observation)
 
     @property
     def steps(self) -> list[Step]:
