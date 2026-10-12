@@ -315,13 +315,16 @@ tinyagent_run_annotated = CodeAnnotator(
 tinyagent_step_annotated = CodeAnnotator(
     TinyAgent._step,
     annotations={
-        (4, 5): "A response is generated and added to memory and trajectory.",
-        8: "The output needs to be parsed into THOUGHT and ACTION using the ReAct parser.",
+        (3, 9): "A response is generated and added to memory.",
         (
-            12,
-            14,
+            11,
+            13,
+        ): "The output needs to be parsed into THOUGHT and ACTION using the ReAct parser.",
+        (
+            15,
+            18,
         ): "We check if the `Response` contains a tool call that signals completion (final_answer). If so, we return the final answer and end the loop. The step is also saved to the trajectory.",
-        16: "If the `Response` contains a tool call, execute it.",
+        20: "If the `Response` contains a tool call, execute it.",
     },
 )
 
